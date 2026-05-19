@@ -2,11 +2,11 @@
 
 > This file holds **only Layer 2 (operational contract) text discipline**. Layer 1 (structural enforcement) is covered by hook / settings.json / skill / agent / template; Layer 3 (norms) is covered by CLAUDE.md. For detailed flow / state file specs / historical context see the Spec "Rebuilding c2 discipline as a minimal set anchored on existing systems" (Notion: https://www.notion.so/<YOUR-PAGE>).
 
-## R-α: Spec approval only via Bon's explicit utterance
+## R-α: Spec approval only via the user's explicit utterance
 
-c2 does not self-approve Spec/Plan content. Approval is recognized only when Bon explicitly replies with phrases like 「承認」「OK」「進めて」. Phase 2 (Spec editing) inside the `/spec` skill does not advance to EnterPlanMode until receiving user OK (matches Stop Whitelist (1) external blocker).
+c2 does not self-approve Spec/Plan content. Approval is recognized only when the user explicitly replies with phrases like 「承認」「OK」「進めて」. Phase 2 (Spec editing) inside the `/spec` skill does not advance to EnterPlanMode until receiving user OK (matches Stop Whitelist (1) external blocker).
 
-**Rationale**: Spec / Plan is not irreversible, but this gate maintains the separation of responsibility for design decisions (Bon owns the design decision; c2 owns execution). Self-approval by c2 breaks the downstream Mid-execution Judgment Rules (their precondition collapses).
+**Rationale**: Spec / Plan is not irreversible, but this gate maintains the separation of responsibility for design decisions (the user owns the design decision; c2 owns execution). Self-approval by c2 breaks the downstream Mid-execution Judgment Rules (their precondition collapses).
 
 ## R-β: c2 dispatches autonomously; delegating judgment is prohibited
 
@@ -15,7 +15,7 @@ Mid-implementation decisions are auto-dispatched by c2 under the Mid-execution J
 **Exceptions** (3 cases where stopping is allowed, the Stop Whitelist):
 1. **External blocker**: technically not executable (Auth / payment / physical device / billing confirmation / built-in CLI command etc.)
 2. **Plan-unwritten + irreversible**: force-push / DB drop / public release tag etc. with no plan entry
-3. **Bon explicit interrupt**: explicit interruption
+3. **the user explicit interrupt**: explicit interruption
 
 Stopping outside these is an R-β violation.
 
@@ -24,7 +24,7 @@ Stopping outside these is an R-β violation.
 | Layer | Enforcement mechanism | Examples |
 |---|---|---|
 | **Layer 1: Structural** | hook / settings.json / skill / agent / template | plan-gate.js / confirmation-leak-detector.js / autoMode.hard_deny |
-| **Layer 2: Operational contract** | This file's text discipline (R-α / R-β) | Spec approval only via Bon's explicit utterance / c2 autonomous dispatch |
+| **Layer 2: Operational contract** | This file's text discipline (R-α / R-β) | Spec approval only via the user's explicit utterance / c2 autonomous dispatch |
 | **Layer 3: Norms** | CLAUDE.md (N-1〜N-4) | Goal end-to-end priority / existing-systems-first / 50+ lines → sub-agent / discipline-reduction candidate required |
 
 Before introducing new discipline, evaluate in order Layer 1 → 2 → 3 (CLAUDE.md norm N-2 "existing-systems-first").

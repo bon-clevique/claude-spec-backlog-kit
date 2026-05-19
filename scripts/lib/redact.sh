@@ -46,9 +46,13 @@ redact_content() {
     -e 's/badfatcat\.biz/<your-email>/g' \
     -e 's/<user>@/<user>@/g' \
     -e 's#$HOME/#$HOME/#g' \
+    -e "s/the user's/the user's/g" \
+    -e 's/(^|[^A-Za-z-])the user([^A-Za-z-]|$)/\1the user\2/g' \
     -e 's#notion\.so/[a-z0-9-]+-[a-f0-9]{32}#notion.so/<YOUR-PAGE>#g'
-  # Order note: <your-github-user> MUST come before [Cc]levique
+  # Order note 1: <your-github-user> MUST come before [Cc]levique
   # (otherwise '<your-github-user>' would be partially matched by '<your-org>' → <your-org>)
+  # Order note 2: <your-github-user> MUST come before \bBon\b
+  # (otherwise '<your-github-user>' would partially match 'the user' first)
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -69,6 +73,7 @@ verify_clean() {
     "NOTION-KEY|secret_[A-Za-z0-9]{40,}" \
     "NOTION-API-ASSIGN|NOTION_API_KEY=secret_[A-Za-z0-9]+" \
     "PERSONAL|<your-github-user>|<your-app>|badfatcat|<your-org>" \
+    "PERSONAL-NAME|(^|[^A-Za-z-])the user([^A-Za-z-]|$)" \
     "HOME-PATH|$HOME/" \
     "GH-OAUTH|gh[oush]_[A-Za-z0-9]{36,}" \
     "AWS-AKID|AKIA[0-9A-Z]{16}" \
@@ -82,7 +87,8 @@ verify_clean() {
     # PERSONAL は case-insensitive、その他は case-sensitive
     # redact.sh 自身は meta-text として patterns を保持するため self-exclude
     # (redact 規則そのものを記述するため、結果的に PERSONAL grep が hit する)
-    local grep_opts=("-rEn" "--exclude-dir=.git" "--exclude=redact.sh")
+    # README.md / LICENSE / USAGE.md は mirror メタファイルとして意図的に <your-github-user> を含む
+    local grep_opts=("-rEn" "--exclude-dir=.git" "--exclude=redact.sh" "--exclude=README.md" "--exclude=LICENSE" "--exclude=USAGE.md")
     if [ "$label" = "PERSONAL" ]; then
       grep_opts+=("-i")
     fi
@@ -113,7 +119,7 @@ verify_clean() {
 # ─────────────────────────────────────────────────────────────────────────────
 _self_test() {
   local pass=0
-  local total=7
+  local total=9
 
   local -a inputs expected labels
   inputs=()
@@ -154,6 +160,16 @@ _self_test() {
   inputs+=("Authorization: Bearer <REDACTED-JWT>")
   expected+=("Authorization: Bearer <REDACTED-JWT>")
   labels+=("case 7 (JWT)")
+
+  # case 8: standalone "the user" (personal name) → "the user"
+  inputs+=("the user's solo development environment")
+  expected+=("the user's solo development environment")
+  labels+=("case 8 (the user's possessive)")
+
+  # case 9: <your-github-user> must NOT be partially matched by \bBon\b
+  inputs+=("the user owns <your-github-user> repo")
+  expected+=("the user owns <your-github-user> repo")
+  labels+=("case 9 (the user vs <your-github-user> order safety)")
 
   local i
   for ((i = 0; i < total; i++)); do

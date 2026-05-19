@@ -12,7 +12,7 @@
 - **database_id**: `<UUID>`
 - **data_source_id**: `<UUID>`
 
-### 2. Bon Task
+### 2. the user Task
 - **Purpose**: Task management
 - **database_id**: `<UUID>`
 - **data_source_id**: `<UUID>`
@@ -49,10 +49,10 @@
   2. external collection への `pages.create`: `400 "Child of an external user defined external collection instance is not an external object instance"`
   3. `connections.notion.*` API: これは Notion 内部 button/automation の scripting API で **public API には存在しない**
 - **唯一の正規 path** = magic word (`closes <unique_id>`)。`~/.claude/scripts/create-draft-pr.sh` が PR body 先頭に自動付与する (PR #41 で実装)
-- **関連 state file** (Bon が直接編集する想定なし、自動管理):
+- **関連 state file** (the user が直接編集する想定なし、自動管理):
   - `~/.claude/state/spec-page-<title>` — Notion page_id (UUID)。`spec-create.sh` で書出、`spec-finalize.sh` / `plan-archive-on-merge.sh` で rm
   - `~/.claude/state/spec-unique-id-<title>` — Unique ID 文字列 (例: `CC-10`)。`spec-create.sh` で書出 (`md_to_notion.py` の create_page() return から取得)、`spec-finalize.sh` / `plan-archive-on-merge.sh` で rm。不在時は `create-draft-pr.sh` が Notion API `pages.retrieve` で backfill
-  - **Recovery path**: 両 state file 不在 + Notion API 失敗時は magic word なし PR が作成される (PR は通る)。手動 recovery は Bon が PR body 先頭に `closes <unique_id>` を追加 (Notion sync が trigger される)
+  - **Recovery path**: 両 state file 不在 + Notion API 失敗時は magic word なし PR が作成される (PR は通る)。手動 recovery は the user が PR body 先頭に `closes <unique_id>` を追加 (Notion sync が trigger される)
 - **関連 script**:
   - `~/.claude/scripts/create-draft-pr.sh` (magic word 自動挿入)
   - `~/.claude/skills/spec/scripts/spec-create.sh` (state file 書出)
