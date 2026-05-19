@@ -138,7 +138,7 @@ mode_init() {
     mkdir -p "$dest_dir"
 
     # sanitize 済コピー (stdin → redact_content → stdout)
-    cat "$src" | redact_content > "$dest"
+    redact_content < "$src" > "$dest"
 
     # 元ファイルが実行可能なら DEST も chmod 755
     if [ -x "$src" ]; then
@@ -182,10 +182,10 @@ zenn 記事「AI に実装を任せたら、自分の仕事は『何を作るか
 
 ## 関連記事
 
-- [AI に実装を任せたら、自分の仕事は『何を作るか』と『やらないこと』だけになった (前編)](https://zenn.dev/<your-org>) — 現状の Spec + Backlog 運用
-- [ルール1247行→2行にした話。AIに本当に任せるための規律設計術 (後編)](https://zenn.dev/<your-org>) — そこに至るまでの 1 週間の悪戦苦闘
+- AI に実装を任せたら、自分の仕事は『何を作るか』と『やらないこと』だけになった (前編) — 現状の Spec + Backlog 運用
+- ルール1247行→2行にした話。AIに本当に任せるための規律設計術 (後編) — そこに至るまでの 1 週間の悪戦苦闘
 
-(blog 公開時に URL を確定)
+(blog 公開時に zenn URL を追記)
 
 ## 本体との関係
 
@@ -294,7 +294,7 @@ mode_sync() {
     tmp="$(mktemp)"
 
     # sanitize 済 content を tmp に書き出す
-    cat "$src" | redact_content > "$tmp"
+    redact_content < "$src" > "$tmp"
 
     if [ ! -e "$dest" ]; then
       # DEST 不在: 新規コピー
@@ -400,7 +400,7 @@ mode_dry_run() {
 
     # redact 前後の差分を cmp で判定 (実書き込みなし、tmp は即破棄)
     tmp_redacted="$(mktemp)"
-    cat "$src" | redact_content > "$tmp_redacted"
+    redact_content < "$src" > "$tmp_redacted"
     if ! cmp -s "$src" "$tmp_redacted"; then
       changed_by_redact=$((changed_by_redact + 1))
     fi
@@ -472,7 +472,7 @@ EOF
             continue
           fi
           tmp_redacted2="$(mktemp)"
-          cat "$src" | redact_content > "$tmp_redacted2"
+          redact_content < "$src" > "$tmp_redacted2"
           if cmp -s "$tmp_redacted2" "$dest"; then
             predicted_unchanged=$((predicted_unchanged + 1))
           else

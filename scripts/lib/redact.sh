@@ -27,7 +27,17 @@ redact_content() {
     -e 's/NOTION_API_KEY=secret_[A-Za-z0-9]+/NOTION_API_KEY=<your-notion-api-key>/g' \
     -e 's/secret_[A-Za-z0-9]{40,}/<REDACTED-NOTION-KEY>/g' \
     -e 's/ghp_[A-Za-z0-9]{36,}/<REDACTED-GH-PAT>/g' \
+    -e 's/gho_[A-Za-z0-9]{36,}/<REDACTED-GH-OAUTH>/g' \
+    -e 's/ghu_[A-Za-z0-9]{36,}/<REDACTED-GH-USER>/g' \
+    -e 's/ghs_[A-Za-z0-9]{36,}/<REDACTED-GH-SERVER>/g' \
+    -e 's/ghr_[A-Za-z0-9]{36,}/<REDACTED-GH-REFRESH>/g' \
     -e 's/sk-ant-[A-Za-z0-9_-]+/<REDACTED-ANTHROPIC-KEY>/g' \
+    -e 's/AKIA[0-9A-Z]{16}/<REDACTED-AWS-AKID>/g' \
+    -e 's/xox[bpars]-[0-9A-Za-z-]+/<REDACTED-SLACK-TOKEN>/g' \
+    -e 's/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/<REDACTED-JWT>/g' \
+    -e 's/sk_(live|test)_[A-Za-z0-9]{24,}/<REDACTED-STRIPE-SK>/g' \
+    -e 's/pk_(live|test)_[A-Za-z0-9]{24,}/<REDACTED-STRIPE-PK>/g' \
+    -e 's/-----BEGIN [A-Z ]+PRIVATE KEY-----[^-]*-----END [A-Z ]+PRIVATE KEY-----/<REDACTED-PRIVATE-KEY>/g' \
     -e 's/data_source_id("|'\'')?[[:space:]]*[:=][[:space:]]*("|'\'')?[a-f0-9-]{36}/data_source_id: <YOUR_DATA_SOURCE_ID>/g' \
     -e 's/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/<UUID>/g' \
     -e 's/<your-github-user>/<your-github-user>/g' \
@@ -37,6 +47,8 @@ redact_content() {
     -e 's/<user>@/<user>@/g' \
     -e 's#$HOME/#$HOME/#g' \
     -e 's#notion\.so/[a-z0-9-]+-[a-f0-9]{32}#notion.so/<YOUR-PAGE>#g'
+  # Order note: <your-github-user> MUST come before [Cc]levique
+  # (otherwise '<your-github-user>' would be partially matched by '<your-org>' → <your-org>)
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -56,8 +68,14 @@ verify_clean() {
     "UUID|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}" \
     "NOTION-KEY|secret_[A-Za-z0-9]{40,}" \
     "NOTION-API-ASSIGN|NOTION_API_KEY=secret_[A-Za-z0-9]+" \
-    "PERSONAL|<your-github-user>|<your-app>|badfatcat" \
-    "HOME-PATH|$HOME/"
+    "PERSONAL|<your-github-user>|<your-app>|badfatcat|<your-org>" \
+    "HOME-PATH|$HOME/" \
+    "GH-OAUTH|gh[oush]_[A-Za-z0-9]{36,}" \
+    "AWS-AKID|AKIA[0-9A-Z]{16}" \
+    "SLACK-TOKEN|xox[bpars]-[0-9A-Za-z-]+" \
+    "JWT|eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+" \
+    "STRIPE-KEY|(sk|pk)_(live|test)_[A-Za-z0-9]{24,}" \
+    "PRIVATE-KEY|-----BEGIN [A-Z ]+PRIVATE KEY-----"
   do
     label="${entry%%|*}"
     pattern="${entry#*|}"
@@ -69,8 +87,9 @@ verify_clean() {
       grep_opts+=("-i")
     fi
     # grep が見つけたら結果を整形して stderr に出す。grep 不検出は失敗扱いしない
+    # pattern が `-----BEGIN ...` のように `-` で始まることがあるため `-e` で渡す
     local hits
-    if hits=$(grep "${grep_opts[@]}" "$pattern" "$target_dir" 2>/dev/null); then
+    if hits=$(grep "${grep_opts[@]}" -e "$pattern" "$target_dir" 2>/dev/null); then
       while IFS= read -r line; do
         [ -z "$line" ] && continue
         # line format: <file>:<lineno>:<content>
@@ -94,7 +113,7 @@ verify_clean() {
 # ─────────────────────────────────────────────────────────────────────────────
 _self_test() {
   local pass=0
-  local total=4
+  local total=7
 
   local -a inputs expected labels
   inputs=()
@@ -120,6 +139,21 @@ _self_test() {
   inputs+=("<your-app> https://www.notion.so/<YOUR-PAGE>")
   expected+=("<your-app> https://www.notion.so/<YOUR-PAGE>")
   labels+=("case 4 (<your-app> + Notion URL)")
+
+  # case 5: GH OAuth token
+  inputs+=("token: <REDACTED-GH-OAUTH>")
+  expected+=("token: <REDACTED-GH-OAUTH>")
+  labels+=("case 5 (GH OAuth)")
+
+  # case 6: AWS Access Key + Slack token
+  inputs+=("aws=<REDACTED-AWS-AKID> slack=<REDACTED-SLACK-TOKEN>")
+  expected+=("aws=<REDACTED-AWS-AKID> slack=<REDACTED-SLACK-TOKEN>")
+  labels+=("case 6 (AWS + Slack)")
+
+  # case 7: JWT (3 dot-separated base64url segments starting with eyJ)
+  inputs+=("Authorization: Bearer <REDACTED-JWT>")
+  expected+=("Authorization: Bearer <REDACTED-JWT>")
+  labels+=("case 7 (JWT)")
 
   local i
   for ((i = 0; i < total; i++)); do
@@ -150,7 +184,7 @@ Usage:
   verify_clean <dir>
 
 Standalone:
-  bash redact.sh --self-test   # 4 cases の self-test を実行
+  bash redact.sh --self-test   # 7 cases の self-test を実行
   bash redact.sh --help        # この usage を表示
 EOF
 }
