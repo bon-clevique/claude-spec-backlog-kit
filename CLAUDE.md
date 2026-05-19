@@ -1,4 +1,4 @@
-# CLAUDE.md — Bon's Dev Environment (Global)
+# CLAUDE.md — the user's Dev Environment (Global)
 
 > **This file is an index**. Rule bodies live in separate files (SoT = Single Source of Truth).
 > - **Workflow discipline / Stop Whitelist / Mid-execution Judgment / Devil's Advocate / End-to-End Verification / Permission vs Workflow** → `rules/common/workflow-enforcement.md` (auto-loaded)
