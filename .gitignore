@@ -1,0 +1,11 @@
+# 二重ガード: 万一の混入を catch するための ignore
+.DS_Store
+*.swp
+*.log
+state/
+actions/
+backlog/
+__pycache__/
+*.pyc
+.env
+.env.*

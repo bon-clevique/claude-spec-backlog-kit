@@ -1,0 +1,351 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "skillListingMaxDescChars": 500,
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Edit(~/dev/**)",
+      "Write(~/dev/**)",
+      "Edit(~/.claude/reference/**)",
+      "Edit(~/.claude/rules/**)",
+      "Read(~/.claude/plans/**)",
+      "Edit(~/.claude/plans/**)",
+      "Edit(~/.claude/memory/**)",
+      "Write(~/.claude/plans/**)",
+      "Write(~/.claude/memory/**)",
+      "Read(~/.claude/backlog/**)",
+      "Edit(~/.claude/backlog/**)",
+      "Write(~/.claude/backlog/**)",
+      "Glob(~/.claude/backlog/**)",
+      "Read(**/.claude/backlog/**)",
+      "Edit(**/.claude/backlog/**)",
+      "Write(**/.claude/backlog/**)",
+      "Glob(**/.claude/backlog/**)",
+      "Read(~/.claude/BACKLOG.md)",
+      "Read(~/.claude/director-results/**)",
+      "Write(~/.claude/director-results/**)",
+      "Glob(~/.claude/director-results/**)"
+    ],
+    "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "EnterPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/plan-enter-guard.js",
+            "timeout": 2000
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/pre-claudemd-snapshot.js",
+            "timeout": 3000
+          },
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/plan-gate.js",
+            "timeout": 2000
+          },
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/plan-enforce.js",
+            "timeout": 2000
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/doc-file-warning.js"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/post-edit-console-warn.js"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/plan-current-recorder.js",
+            "timeout": 2000
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/plan-out-of-scope-watcher.sh",
+            "timeout": 3000
+          }
+        ]
+      },
+      {
+        "matcher": "ExitPlanMode|EnterPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/plan-approval-marker.js",
+            "timeout": 2000
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/plan-archive-on-merge.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/pre-compact-snapshot.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/post-compact-context.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f /tmp/claude-session-start || date +%s > /tmp/claude-session-start"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/settings-health-trigger.js",
+            "timeout": 1000
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/backlog-extract-reminder.sh",
+            "timeout": 1000
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/investigation-delegate-hint.sh",
+            "timeout": 1000
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/next-suggestion-injector.sh",
+            "timeout": 3000
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PROJECT=$(basename \"$PWD\") BRANCH=$(git -C \"$PWD\" rev-parse --abbrev-ref HEAD 2>/dev/null || echo '-') && $HOME/.asdf/installs/ruby/3.4.7/bin/terminal-notifier -title 'Claude Code' -message \"📁 ${PROJECT}  🌿 ${BRANCH}\" -activate net.kovidgoyal.kitty"
+          }
+        ]
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PermissionDenied\", \"retry\": true}}'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/confirmation-leak-detector.js",
+            "timeout": 3000
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/spec-recap-extractor.sh",
+            "timeout": 7000
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/plan-archive-fallback.sh",
+            "timeout": 3000
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/hooks/completion-gate.js",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/slack-notify.sh",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/activity-log-rotator.sh",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/turn-checkpoint.sh",
+            "timeout": 3000
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/hooks/plan-archive-fallback.sh",
+            "timeout": 3000
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/scripts/extract-lessons.py",
+            "timeout": 30000
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/scripts/cleanup-orphan-state.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline.sh"
+  },
+  "enabledPlugins": {
+    "swift-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true
+  },
+  "alwaysThinkingEnabled": false,
+  "effortLevel": "xhigh",
+  "showThinkingSummaries": true,
+  "skipDangerousModePermissionPrompt": true,
+  "remoteControlAtStartup": false,
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
+  "feedbackSurveyState": {
+    "lastShownTime": 1754091634346
+  }
+}
